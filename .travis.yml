@@ -1,0 +1,9 @@
+language: go
+go:
+  - "1.x"
+branches:
+  only:
+    - /^v\d+/
+    - ci
+    - master
+    - stage
