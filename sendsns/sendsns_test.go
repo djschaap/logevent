@@ -11,22 +11,24 @@ import (
 func TestNew(t *testing.T) {
 	t.Run("with no args",
 		func(t *testing.T) {
-			obj := New()
+			obj := New("t")
 			if obj.trace == true {
 				t.Errorf("expected trace=false, got %s", strconv.FormatBool(obj.trace))
 			}
-
+			if obj.snsTopicArn != "t" {
+				t.Errorf("expected snsTopicArn=t, got %s", obj.snsTopicArn)
+			}
 		},
 	)
 	t.Run("implements MessageSender",
 		func(t *testing.T) {
-			var _ logevent.MessageSender = New()
+			var _ logevent.MessageSender = New("t")
 		},
 	)
 }
 
 func TestSetTrace(t *testing.T) {
-	obj := New()
+	obj := New("t")
 	if obj.trace != false {
 		t.Errorf("expected initial trace=false, got %s",
 			strconv.FormatBool(obj.trace))
@@ -49,7 +51,7 @@ func Test_buildSnsMessage_empty_LogEvent(t *testing.T) {
 			// empty!
 		},
 	}
-	obj := New()
+	obj := New("t")
 	m := obj.buildSnsMessage(logEvent)
 	t.Run("SnsMessage.MessageAttributes",
 		func(t *testing.T) {
@@ -125,7 +127,7 @@ func Test_buildSnsMessage_simple_LogEvent(t *testing.T) {
 			//Event: now,
 		},
 	}
-	obj := New()
+	obj := New("t")
 	m := obj.buildSnsMessage(logEvent)
 	t.Run("SnsMessage.MessageAttributes",
 		func(t *testing.T) {

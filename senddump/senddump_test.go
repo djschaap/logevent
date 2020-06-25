@@ -26,7 +26,7 @@ func TestSendMessage(t *testing.T) {
 	obj := New()
 	logEvent := logevent.LogEvent{}
 
-	err := obj.SendMessage("topic", logEvent)
+	err := obj.SendMessage(logEvent)
 	if err == nil {
 		t.Error("expected error from SendMessage() but got nil")
 	}
@@ -35,7 +35,7 @@ func TestSendMessage(t *testing.T) {
 	if err != nil {
 		t.Errorf("OpenSvc() returned unexpected error %v", err)
 	}
-	obj.SendMessage("topic", logEvent)
+	obj.SendMessage(logEvent)
 
 	err = obj.OpenSvc()
 	if err == nil {

@@ -6,7 +6,7 @@ import (
 
 type MessageSender interface {
 	OpenSvc() error
-	SendMessage(string, LogEvent) error
+	SendMessage(LogEvent) error
 	SetTrace(bool)
 }
 

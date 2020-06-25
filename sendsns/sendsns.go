@@ -18,8 +18,9 @@ type SnsMessage struct {
 }
 
 type sess struct {
-	svc   *sns.SNS
-	trace bool
+	snsTopicArn string
+	svc         *sns.SNS
+	trace       bool
 }
 
 // function(s)
@@ -32,8 +33,7 @@ func (self *sess) OpenSvc() error {
 	return nil
 }
 
-func (self *sess) SendMessage(topicArn string, logEvent logevent.LogEvent) error {
-	self.tracePretty("TRACE_SNS logEvent =", logEvent)
+func (self *sess) SendMessage(logEvent logevent.LogEvent) error {
 	snsMessage := self.buildSnsMessage(logEvent)
 	self.tracePretty("TRACE_SNS MessageAttributes =", snsMessage.MessageAttributes)
 	self.tracePretty("TRACE_SNS Message =", snsMessage.Message)
@@ -41,7 +41,7 @@ func (self *sess) SendMessage(topicArn string, logEvent logevent.LogEvent) error
 	result, err := self.svc.Publish(&sns.PublishInput{
 		MessageAttributes: snsMessage.MessageAttributes,
 		Message:           aws.String(snsMessage.Message),
-		TopicArn:          &topicArn,
+		TopicArn:          &self.snsTopicArn,
 	})
 
 	if err != nil {
@@ -113,7 +113,9 @@ func (self *sess) tracePrintln(
 	}
 }
 
-func New() *sess {
-	sess := sess{}
+func New(snsTopicArn string) *sess {
+	sess := sess{
+		snsTopicArn: snsTopicArn,
+	}
 	return &sess
 }

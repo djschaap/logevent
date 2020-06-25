@@ -5,6 +5,7 @@ import (
 	"github.com/djschaap/logevent"
 	"github.com/kr/pretty"
 	"log"
+	"time"
 )
 
 // structs
@@ -24,12 +25,14 @@ func (self *sess) OpenSvc() error {
 	return nil
 }
 
-func (self *sess) SendMessage(topicArn string, logEvent logevent.LogEvent) error {
+func (self *sess) SendMessage(logEvent logevent.LogEvent) error {
 	if !self.initialized {
 		return errors.New("SendMessage() called before OpenSvc()")
 	}
-	self.tracePretty("TRACE_SENDER logEvent =", logEvent)
-	self.tracePrintln("TRACE_SENDER Success")
+	timeString := logEvent.Content.Time.UTC().Format(time.RFC3339)
+	logEvent.Content.Time = time.Time{}
+	self.tracePretty("TRACE_SENDER time =", timeString,
+		" logEvent =", logEvent)
 	return nil
 }
 
