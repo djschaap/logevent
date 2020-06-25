@@ -45,6 +45,19 @@ TRACE=x go run cmd/send/main.go \
   "message with time offset"
 ```
 
+### sendhec Package
+
+Send message directly to Splunk HTTP Event Collector (HEC).
+
+```bash
+export HEC_URL=https://localhost:8088
+export HEC_TOKEN=00000000-0000-0000-0000-000000000000
+export HEC_INSECURE=true
+PACKAGE=sendhec TRACE=x go run cmd/send/main.go \
+  -host h2 \
+  "message with host"
+```
+
 ### sendsns Package
 
 Send message to Amazon SNS topic.

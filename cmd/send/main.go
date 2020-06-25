@@ -6,7 +6,9 @@ import (
 	"github.com/djschaap/logevent"
 	"github.com/djschaap/logevent/flagarray"
 	"github.com/djschaap/logevent/senddump"
+	"github.com/djschaap/logevent/sendhec"
 	"github.com/djschaap/logevent/sendsns"
+	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"regexp"
@@ -52,6 +54,11 @@ func main() {
 		os.Exit(0)
 	}
 
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	senderPackage := os.Getenv("PACKAGE")
 	var traceOutput bool
 	if len(os.Getenv("TRACE")) > 0 {
@@ -71,6 +78,17 @@ func main() {
 			log.Println("WARNING: sendsns requires TOPIC")
 		}
 		sender = sendsns.New(topicString)
+	} else if senderPackage == "sendhec" {
+		hecUrl := os.Getenv("HEC_URL")
+		hecToken := os.Getenv("HEC_TOKEN")
+		if len(hecToken) <= 0 {
+			log.Fatal("Splunk HEC_TOKEN must be specified")
+		}
+		hecSender := sendhec.New(hecUrl, hecToken)
+		if len(os.Getenv("HEC_INSECURE")) > 0 {
+			hecSender.SetHecInsecure(true)
+		}
+		sender = hecSender
 	} else if senderPackage == "senddump" || senderPackage == "" {
 		sender = senddump.New()
 	} else {
@@ -130,7 +148,7 @@ func main() {
 		logEvent.Content.Fields[kv[1]] = kv[2]
 	}
 
-	err := sender.OpenSvc()
+	err = sender.OpenSvc()
 	if err != nil {
 		log.Fatal("Error from OpenSvc:", err)
 	}
