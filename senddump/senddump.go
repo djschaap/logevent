@@ -1,4 +1,4 @@
-package sendstdout
+package senddump
 
 import (
 	"errors"

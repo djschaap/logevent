@@ -1,4 +1,4 @@
-package sendstdout
+package senddump
 
 import (
 	"github.com/djschaap/logevent"
