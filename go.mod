@@ -8,4 +8,5 @@ require (
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/joho/godotenv v1.3.0
 	github.com/kr/pretty v0.2.0
+	github.com/streadway/amqp v1.0.0
 )

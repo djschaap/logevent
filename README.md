@@ -12,6 +12,10 @@ go test ./...
 # coverage
 go test -coverprofile=coverage.out ./... \
   && go tool cover -html=coverage.out
+
+# sendamqp integration tests
+AMQP_URL=amqp://guest:guest@localhost:5672 \
+  go test -tags amqp ./...
 ```
 
 ## send CLI
@@ -23,6 +27,20 @@ Command-line arguments are used for message/event-specific properties.
 
 Setting boolean variables (TRACE, etc.) to ANYTHING other than the
 empty string will be interpreted as true.
+
+### sendamqp Package
+
+Send message to RabbitMQ exchange.
+Exchange must already exist.
+
+```bash
+export AMQP_URL=amqp://guest:guest@localhost:5672
+export AMQP_EXCHANGE=amq.headers
+export AMQP_ROUTING_KEY=the_weather
+PACKAGE=sendamqp TRACE=x go run cmd/send/main.go \
+  -host h2 \
+  "message with host"
+```
 
 ### senddump Package
 

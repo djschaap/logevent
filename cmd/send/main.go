@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/djschaap/logevent"
 	"github.com/djschaap/logevent/flagarray"
+	"github.com/djschaap/logevent/sendamqp"
 	"github.com/djschaap/logevent/senddump"
 	"github.com/djschaap/logevent/sendhec"
 	"github.com/djschaap/logevent/sendsns"
@@ -67,17 +68,17 @@ func main() {
 	}
 
 	var sender logevent.MessageSender
-	if senderPackage == "sendsns" {
-		// github.com/aws/aws-sdk-go/aws reads env vars itself
-		//aws_access_key_id := os.Getenv("AWS_ACCESS_KEY_ID")
-		//aws_region := os.Getenv("AWS_REGION")
-		//aws_secret_access_key := os.Getenv("AWS_SECRET_ACCESS_KEY")
-		topicString := os.Getenv("TOPIC")
-		hasQueue, _ := regexp.MatchString(`^arn:`, topicString)
-		if !hasQueue {
-			log.Println("WARNING: sendsns requires TOPIC")
+	if senderPackage == "sendamqp" {
+		amqpUrl := os.Getenv("AMQP_URL")
+		amqpExchange := os.Getenv("AMQP_EXCHANGE")
+		amqpRoutingKey := os.Getenv("AMQP_ROUTING_KEY")
+		if len(amqpRoutingKey) <= 0 {
+			log.Println("WARNING: sendamqp requires AMQP_ROUTING_KEY; continuing anyway")
 		}
-		sender = sendsns.New(topicString)
+		amqpSender := sendamqp.New(amqpUrl, amqpExchange, amqpRoutingKey)
+		sender = amqpSender
+	} else if senderPackage == "senddump" || senderPackage == "" {
+		sender = senddump.New()
 	} else if senderPackage == "sendhec" {
 		hecUrl := os.Getenv("HEC_URL")
 		hecToken := os.Getenv("HEC_TOKEN")
@@ -89,8 +90,17 @@ func main() {
 			hecSender.SetHecInsecure(true)
 		}
 		sender = hecSender
-	} else if senderPackage == "senddump" || senderPackage == "" {
-		sender = senddump.New()
+	} else if senderPackage == "sendsns" {
+		// github.com/aws/aws-sdk-go/aws reads env vars itself
+		//aws_access_key_id := os.Getenv("AWS_ACCESS_KEY_ID")
+		//aws_region := os.Getenv("AWS_REGION")
+		//aws_secret_access_key := os.Getenv("AWS_SECRET_ACCESS_KEY")
+		topicString := os.Getenv("TOPIC")
+		hasQueue, _ := regexp.MatchString(`^arn:`, topicString)
+		if !hasQueue {
+			log.Println("WARNING: sendsns requires TOPIC; continuing anyway")
+		}
+		sender = sendsns.New(topicString)
 	} else {
 		log.Fatal("package ", senderPackage, " is not valid")
 	}
