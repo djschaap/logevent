@@ -5,6 +5,7 @@ import (
 )
 
 type MessageSender interface {
+	CloseSvc() error
 	OpenSvc() error
 	SendMessage(LogEvent) error
 	SetTrace(bool)

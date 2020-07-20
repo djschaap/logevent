@@ -6,8 +6,10 @@ A collection of packages for Splunk/message queue integration.
 
 ## Run Tests
 ```bash
+# standalone unit tests
 go test ./...
 
+# coverage
 go test -coverprofile=coverage.out ./... \
   && go tool cover -html=coverage.out
 ```

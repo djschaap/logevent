@@ -2,6 +2,7 @@ package sendsns
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
@@ -25,7 +26,18 @@ type sess struct {
 
 // function(s)
 
+func (self *sess) CloseSvc() error {
+	if self.svc == nil {
+		return errors.New("CloseSvc() called again or before OpenSvc(); that should not be done")
+	}
+	self.svc = nil
+	return nil
+}
+
 func (self *sess) OpenSvc() error {
+	if self.svc != nil {
+		return errors.New("OpenSvc() called again; that should not be done")
+	}
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
@@ -34,6 +46,9 @@ func (self *sess) OpenSvc() error {
 }
 
 func (self *sess) SendMessage(logEvent logevent.LogEvent) error {
+	if self.svc == nil {
+		return errors.New("SendMessage() called before OpenSvc()")
+	}
 	snsMessage := self.buildSnsMessage(logEvent)
 	self.tracePretty("TRACE_SNS MessageAttributes =", snsMessage.MessageAttributes)
 	self.tracePretty("TRACE_SNS Message =", snsMessage.Message)

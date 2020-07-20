@@ -16,29 +16,36 @@ type sess struct {
 	hecInsecure bool
 	hecToken    string
 	hecUrl      string
-	initialized bool
 	trace       bool
 }
 
-func (self *sess) OpenSvc() error {
-	if self.initialized {
-		return errors.New("OpenSvc() called again; that should not happen")
+func (self *sess) CloseSvc() error {
+	if self.hecClient == nil {
+		return errors.New("CloseSvc() called again or before OpenSvc(); that should not be done")
 	}
-	self.hecClient = hec.NewCluster(
+	self.hecClient = nil
+	return nil
+}
+
+func (self *sess) OpenSvc() error {
+	if self.hecClient != nil {
+		return errors.New("OpenSvc() called again; that should not be done")
+	}
+	client := hec.NewCluster(
 		[]string{self.hecUrl},
 		self.hecToken,
 	)
 	if self.hecInsecure {
-		self.hecClient.SetHTTPClient(&http.Client{Transport: &http.Transport{
+		client.SetHTTPClient(&http.Client{Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}})
 	}
-	self.initialized = true
+	self.hecClient = client
 	return nil
 }
 
 func (self *sess) SendMessage(logEvent logevent.LogEvent) error {
-	if !self.initialized {
+	if self.hecClient == nil {
 		return errors.New("SendMessage() called before OpenSvc()")
 	}
 	hecEvents := []*hec.Event{

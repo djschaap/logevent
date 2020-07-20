@@ -22,6 +22,30 @@ func TestNew(t *testing.T) {
 	)
 }
 
+func TestRepeatedOpenAndClose(t *testing.T) {
+	obj := New()
+
+	err := obj.OpenSvc()
+	if err != nil {
+		t.Errorf("OpenSvc() returned unexpected error %v", err)
+	}
+
+	err = obj.OpenSvc()
+	if err == nil {
+		t.Error("expected error from OpenSvc() but got nil")
+	}
+
+	err = obj.CloseSvc()
+	if err != nil {
+		t.Errorf("CloseSvc() returned unexpected error %v", err)
+	}
+
+	err = obj.CloseSvc()
+	if err == nil {
+		t.Error("expected error from CloseSvc() but got nil")
+	}
+}
+
 func TestSendMessage(t *testing.T) {
 	obj := New()
 	logEvent := logevent.LogEvent{}
@@ -35,12 +59,8 @@ func TestSendMessage(t *testing.T) {
 	if err != nil {
 		t.Errorf("OpenSvc() returned unexpected error %v", err)
 	}
+	defer obj.CloseSvc()
 	obj.SendMessage(logEvent)
-
-	err = obj.OpenSvc()
-	if err == nil {
-		t.Error("expected error from OpenSvc() but got nil")
-	}
 }
 
 func TestSetTrace(t *testing.T) {

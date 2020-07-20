@@ -152,6 +152,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Error from OpenSvc:", err)
 	}
+	defer sender.CloseSvc()
 	err = sender.SendMessage(logEvent)
 	if err != nil {
 		log.Fatal("Error from SendMessage:", err)

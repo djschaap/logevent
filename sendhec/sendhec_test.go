@@ -12,8 +12,8 @@ func TestNew(t *testing.T) {
 	t.Run("with no args",
 		func(t *testing.T) {
 			obj := New("https://localhost:8088", "00000000-0000-0000-0000-000000000000")
-			if obj.initialized == true {
-				t.Errorf("expected initialized=false, got %s", strconv.FormatBool(obj.initialized))
+			if obj.hecClient != nil {
+				t.Errorf("expected hecClient=nil, got %#v", obj.hecClient)
 			}
 			if obj.trace == true {
 				t.Errorf("expected trace=false, got %s", strconv.FormatBool(obj.trace))
@@ -26,6 +26,30 @@ func TestNew(t *testing.T) {
 			var _ logevent.MessageSender = New("https://localhost:8088", "00000000-0000-0000-0000-000000000000")
 		},
 	)
+}
+
+func TestRepeatedOpenAndClose(t *testing.T) {
+	obj := New("https://localhost:8088", "00000000-0000-0000-0000-000000000000")
+
+	err := obj.OpenSvc()
+	if err != nil {
+		t.Errorf("OpenSvc() returned unexpected error %v", err)
+	}
+
+	err = obj.OpenSvc()
+	if err == nil {
+		t.Error("expected error from OpenSvc() but got nil")
+	}
+
+	err = obj.CloseSvc()
+	if err != nil {
+		t.Errorf("CloseSvc() returned unexpected error %v", err)
+	}
+
+	err = obj.CloseSvc()
+	if err == nil {
+		t.Error("expected error from CloseSvc() but got nil")
+	}
 }
 
 func TestSetHecInsecure(t *testing.T) {

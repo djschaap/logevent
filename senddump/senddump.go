@@ -17,9 +17,17 @@ type sess struct {
 
 // function(s)
 
+func (self *sess) CloseSvc() error {
+	if !self.initialized {
+		return errors.New("CloseSvc() called again or before OpenSvc(); that should not be done")
+	}
+	self.initialized = false
+	return nil
+}
+
 func (self *sess) OpenSvc() error {
 	if self.initialized {
-		return errors.New("OpenSvc() called again; that should not happen")
+		return errors.New("OpenSvc() called again; that should not be done")
 	}
 	self.initialized = true
 	return nil

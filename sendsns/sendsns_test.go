@@ -18,6 +18,9 @@ func TestNew(t *testing.T) {
 			if obj.snsTopicArn != "t" {
 				t.Errorf("expected snsTopicArn=t, got %s", obj.snsTopicArn)
 			}
+			if obj.svc != nil {
+				t.Errorf("expected svc=nil, got %#v", obj.svc)
+			}
 		},
 	)
 	t.Run("implements MessageSender",
@@ -25,6 +28,30 @@ func TestNew(t *testing.T) {
 			var _ logevent.MessageSender = New("t")
 		},
 	)
+}
+
+func TestRepeatedOpenAndClose(t *testing.T) {
+	obj := New("t")
+
+	err := obj.OpenSvc()
+	if err != nil {
+		t.Errorf("OpenSvc() returned unexpected error %v", err)
+	}
+
+	err = obj.OpenSvc()
+	if err == nil {
+		t.Error("expected error from OpenSvc() but got nil")
+	}
+
+	err = obj.CloseSvc()
+	if err != nil {
+		t.Errorf("CloseSvc() returned unexpected error %v", err)
+	}
+
+	err = obj.CloseSvc()
+	if err == nil {
+		t.Error("expected error from CloseSvc() but got nil")
+	}
 }
 
 func TestSetTrace(t *testing.T) {
