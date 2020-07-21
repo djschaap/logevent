@@ -11,67 +11,70 @@ import (
 	"log"
 )
 
-// structs
-
-type SnsMessage struct {
+type snsMessage struct {
 	Message           string
 	MessageAttributes map[string]*sns.MessageAttributeValue
 }
 
-type sess struct {
+// Sess stores sendsns session state.
+type Sess struct {
 	snsTopicArn string
 	svc         *sns.SNS
 	trace       bool
 }
 
-// function(s)
-
-func (self *sess) CloseSvc() error {
-	if self.svc == nil {
+// CloseSvc closes the open session.
+// CloseSvc must not be called when no session is open.
+func (sender *Sess) CloseSvc() error {
+	if sender.svc == nil {
 		return errors.New("CloseSvc() called again or before OpenSvc(); that should not be done")
 	}
-	self.svc = nil
+	sender.svc = nil
 	return nil
 }
 
-func (self *sess) OpenSvc() error {
-	if self.svc != nil {
+// OpenSvc opens a new session.
+// OpenSvc must not be called when a session is already open.
+func (sender *Sess) OpenSvc() error {
+	if sender.svc != nil {
 		return errors.New("OpenSvc() called again; that should not be done")
 	}
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
-	self.svc = sns.New(sess)
+	sender.svc = sns.New(sess)
 	return nil
 }
 
-func (self *sess) SendMessage(logEvent logevent.LogEvent) error {
-	if self.svc == nil {
+// SendMessage sends a LogEvent to Amazon Simple Notification Service.
+func (sender *Sess) SendMessage(logEvent logevent.LogEvent) error {
+	if sender.svc == nil {
 		return errors.New("SendMessage() called before OpenSvc()")
 	}
-	snsMessage := self.buildSnsMessage(logEvent)
-	self.tracePretty("TRACE_SNS MessageAttributes =", snsMessage.MessageAttributes)
-	self.tracePretty("TRACE_SNS Message =", snsMessage.Message)
+	snsMessage := sender.buildSnsMessage(logEvent)
+	sender.tracePretty("TRACE_SNS MessageAttributes =", snsMessage.MessageAttributes)
+	sender.tracePretty("TRACE_SNS Message =", snsMessage.Message)
 
-	result, err := self.svc.Publish(&sns.PublishInput{
+	result, err := sender.svc.Publish(&sns.PublishInput{
 		MessageAttributes: snsMessage.MessageAttributes,
 		Message:           aws.String(snsMessage.Message),
-		TopicArn:          &self.snsTopicArn,
+		TopicArn:          &sender.snsTopicArn,
 	})
 
 	if err != nil {
 		return err
 	}
 
-	self.tracePrintln("TRACE_SNS Success", *result.MessageId)
+	sender.tracePrintln("TRACE_SNS Success", *result.MessageId)
 	return nil
 }
 
-func (self *sess) SetTrace(v bool) {
-	self.trace = v
+// SetTrace enables tracing, which dumps all messages to stderr.
+func (sender *Sess) SetTrace(v bool) {
+	sender.trace = v
 }
 
-func (self *sess) buildSnsMessage(logEvent logevent.LogEvent) SnsMessage {
+func (sender *Sess) buildSnsMessage(logEvent logevent.LogEvent) snsMessage {
 	attr := logEvent.Attributes
 	messageAttributes := make(map[string]*sns.MessageAttributeValue)
 	if attr.CustomerCode != "" {
@@ -104,32 +107,34 @@ func (self *sess) buildSnsMessage(logEvent logevent.LogEvent) SnsMessage {
 			StringValue: aws.String(attr.Sourcetype),
 		}
 	}
-	messageJson_bytes, _ := json.Marshal(logEvent.Content)
-	snsMessage := SnsMessage{
-		Message:           string(messageJson_bytes),
+	messageJSONBytes, _ := json.Marshal(logEvent.Content)
+	snsMsg := snsMessage{
+		Message:           string(messageJSONBytes),
 		MessageAttributes: messageAttributes,
 	}
-	return snsMessage
+	return snsMsg
 }
 
-func (self *sess) tracePretty(
+func (sender *Sess) tracePretty(
 	args ...interface{},
 ) {
-	if self.trace {
+	if sender.trace {
 		pretty.Log(args...)
 	}
 }
 
-func (self *sess) tracePrintln(
+func (sender *Sess) tracePrintln(
 	args ...interface{},
 ) {
-	if self.trace {
+	if sender.trace {
 		log.Println(args...)
 	}
 }
 
-func New(snsTopicArn string) *sess {
-	sess := sess{
+// New creates a new sendsns object/session.
+// It requires an SNS topic ARN.
+func New(snsTopicArn string) *Sess {
+	sess := Sess{
 		snsTopicArn: snsTopicArn,
 	}
 	return &sess

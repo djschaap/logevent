@@ -69,23 +69,23 @@ func main() {
 
 	var sender logevent.MessageSender
 	if senderPackage == "sendamqp" {
-		amqpUrl := os.Getenv("AMQP_URL")
+		amqpURL := os.Getenv("AMQP_URL")
 		amqpExchange := os.Getenv("AMQP_EXCHANGE")
 		amqpRoutingKey := os.Getenv("AMQP_ROUTING_KEY")
 		if len(amqpRoutingKey) <= 0 {
 			log.Println("WARNING: sendamqp requires AMQP_ROUTING_KEY; continuing anyway")
 		}
-		amqpSender := sendamqp.New(amqpUrl, amqpExchange, amqpRoutingKey)
+		amqpSender := sendamqp.New(amqpURL, amqpExchange, amqpRoutingKey)
 		sender = amqpSender
 	} else if senderPackage == "senddump" || senderPackage == "" {
 		sender = senddump.New()
 	} else if senderPackage == "sendhec" {
-		hecUrl := os.Getenv("HEC_URL")
+		hecURL := os.Getenv("HEC_URL")
 		hecToken := os.Getenv("HEC_TOKEN")
 		if len(hecToken) <= 0 {
 			log.Fatal("Splunk HEC_TOKEN must be specified")
 		}
-		hecSender := sendhec.New(hecUrl, hecToken)
+		hecSender := sendhec.New(hecURL, hecToken)
 		if len(os.Getenv("HEC_INSECURE")) > 0 {
 			hecSender.SetHecInsecure(true)
 		}

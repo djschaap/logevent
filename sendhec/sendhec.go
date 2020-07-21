@@ -11,62 +11,71 @@ import (
 	"time"
 )
 
-type sess struct {
+// Sess stores sendhec session state.
+type Sess struct {
 	hecClient   hec.HEC
 	hecInsecure bool
 	hecToken    string
-	hecUrl      string
+	hecURL      string
 	trace       bool
 }
 
-func (self *sess) CloseSvc() error {
-	if self.hecClient == nil {
+// CloseSvc closes the open session.
+// CloseSvc must not be called when no session is open.
+func (sender *Sess) CloseSvc() error {
+	if sender.hecClient == nil {
 		return errors.New("CloseSvc() called again or before OpenSvc(); that should not be done")
 	}
-	self.hecClient = nil
+	sender.hecClient = nil
 	return nil
 }
 
-func (self *sess) OpenSvc() error {
-	if self.hecClient != nil {
+// OpenSvc opens a new session.
+// OpenSvc must not be called when a session is already open.
+func (sender *Sess) OpenSvc() error {
+	if sender.hecClient != nil {
 		return errors.New("OpenSvc() called again; that should not be done")
 	}
 	client := hec.NewCluster(
-		[]string{self.hecUrl},
-		self.hecToken,
+		[]string{sender.hecURL},
+		sender.hecToken,
 	)
-	if self.hecInsecure {
+	if sender.hecInsecure {
 		client.SetHTTPClient(&http.Client{Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}})
 	}
-	self.hecClient = client
+	sender.hecClient = client
 	return nil
 }
 
-func (self *sess) SendMessage(logEvent logevent.LogEvent) error {
-	if self.hecClient == nil {
+// SendMessage sends a LogEvent to a Splunk HTTP Event Collector.
+func (sender *Sess) SendMessage(logEvent logevent.LogEvent) error {
+	if sender.hecClient == nil {
 		return errors.New("SendMessage() called before OpenSvc()")
 	}
 	hecEvents := []*hec.Event{
-		self.formatLogEvent(logEvent),
+		sender.formatLogEvent(logEvent),
 	}
-	self.tracePretty("TRACE_SENDHEC time =",
+	sender.tracePretty("TRACE_SENDHEC time =",
 		logEvent.Content.Time.UTC().Format(time.RFC3339),
 		" hecEvents =", hecEvents)
-	err := self.hecClient.WriteBatch(hecEvents)
+	err := sender.hecClient.WriteBatch(hecEvents)
 	return err
 }
 
-func (self *sess) SetHecInsecure(v bool) {
-	self.hecInsecure = v
+// SetHecInsecure disables SSL/TLS validation.
+// THIS IS INSECURE but may be useful in dev/lab environments.
+func (sender *Sess) SetHecInsecure(v bool) {
+	sender.hecInsecure = v
 }
 
-func (self *sess) SetTrace(v bool) {
-	self.trace = v
+// SetTrace enables tracing, which dumps all messages to stderr.
+func (sender *Sess) SetTrace(v bool) {
+	sender.trace = v
 }
 
-func (self *sess) formatLogEvent(logEvent logevent.LogEvent) *hec.Event {
+func (sender *Sess) formatLogEvent(logEvent logevent.LogEvent) *hec.Event {
 	var hecEvent *hec.Event
 	hecEvent = hec.NewEvent(logEvent.Content.Event)
 	if logEvent.Content.Host != "" {
@@ -93,26 +102,28 @@ func (self *sess) formatLogEvent(logEvent logevent.LogEvent) *hec.Event {
 	return hecEvent
 }
 
-func (self *sess) tracePretty(
+func (sender *Sess) tracePretty(
 	args ...interface{},
 ) {
-	if self.trace {
+	if sender.trace {
 		pretty.Log(args...)
 	}
 }
 
-func (self *sess) tracePrintln(
+func (sender *Sess) tracePrintln(
 	args ...interface{},
 ) {
-	if self.trace {
+	if sender.trace {
 		log.Println(args...)
 	}
 }
 
-func New(hecUrl, hecToken string) *sess {
-	sess := sess{
+// New creates a new sendhec object/session.
+// It requires a Splunk HEC URL and HEC token (typically, GUID).
+func New(hecURL, hecToken string) *Sess {
+	sess := Sess{
 		hecToken: hecToken,
-		hecUrl:   hecUrl,
+		hecURL:   hecURL,
 	}
 	return &sess
 }

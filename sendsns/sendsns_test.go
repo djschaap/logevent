@@ -80,7 +80,7 @@ func Test_buildSnsMessage_empty_LogEvent(t *testing.T) {
 	}
 	obj := New("t")
 	m := obj.buildSnsMessage(logEvent)
-	t.Run("SnsMessage.MessageAttributes",
+	t.Run("snsMessage.MessageAttributes",
 		func(t *testing.T) {
 			if m.MessageAttributes["customer_code"] != nil {
 				val := m.MessageAttributes["customer_code"].StringValue
@@ -104,31 +104,31 @@ func Test_buildSnsMessage_empty_LogEvent(t *testing.T) {
 			}
 		},
 	)
-	t.Run("SnsMessage.Message",
+	t.Run("snsMessage.Message",
 		func(t *testing.T) {
-			var inner_message map[string]interface{}
-			err := json.Unmarshal([]byte(m.Message), &inner_message)
+			var innerMessage map[string]interface{}
+			err := json.Unmarshal([]byte(m.Message), &innerMessage)
 			if err != nil {
 				t.Error("json.Unmarshal error:", err)
 			}
-			if inner_message["host"] != nil {
-				t.Errorf("incorrect host, expected nil got %#v", inner_message["host"])
+			if innerMessage["host"] != nil {
+				t.Errorf("incorrect host, expected nil got %#v", innerMessage["host"])
 			}
-			if inner_message["index"] != nil {
-				t.Errorf("incorrect index, expected nil got %#v", inner_message["index"])
+			if innerMessage["index"] != nil {
+				t.Errorf("incorrect index, expected nil got %#v", innerMessage["index"])
 			}
-			if inner_message["source"] != nil {
-				t.Errorf("incorrect source, expected nil got %#v", inner_message["source"])
+			if innerMessage["source"] != nil {
+				t.Errorf("incorrect source, expected nil got %#v", innerMessage["source"])
 			}
-			if inner_message["sourcetype"] != nil {
-				t.Errorf("incorrect sourcetype, expected nil got %#v", inner_message["sourcetype"])
+			if innerMessage["sourcetype"] != nil {
+				t.Errorf("incorrect sourcetype, expected nil got %#v", innerMessage["sourcetype"])
 			}
 			timeString := "0001-01-01T00:00:00Z"
-			if inner_message["time"].(string) != timeString {
-				//if ! time.IsZero(inner_message["time"]) {
-				//if ! inner_message["time"].(time).IsZero() {
-				t.Errorf("incorrect time, expected %#v got %#v", timeString, inner_message["time"].(string))
-				//t.Errorf("incorrect time, expected zero got %#v", inner_message["time"])
+			if innerMessage["time"].(string) != timeString {
+				//if ! time.IsZero(innerMessage["time"]) {
+				//if ! innerMessage["time"].(time).IsZero() {
+				t.Errorf("incorrect time, expected %#v got %#v", timeString, innerMessage["time"].(string))
+				//t.Errorf("incorrect time, expected zero got %#v", innerMessage["time"])
 			}
 		},
 	)
@@ -156,52 +156,52 @@ func Test_buildSnsMessage_simple_LogEvent(t *testing.T) {
 	}
 	obj := New("t")
 	m := obj.buildSnsMessage(logEvent)
-	t.Run("SnsMessage.MessageAttributes",
+	t.Run("snsMessage.MessageAttributes",
 		func(t *testing.T) {
-			got_customer_code := m.MessageAttributes["customer_code"].StringValue
-			if *got_customer_code != "c1" {
-				t.Errorf("incorrect customer_code attribute, expected %#v got %#v", "c1", *got_customer_code)
+			gotCustomerCode := m.MessageAttributes["customer_code"].StringValue
+			if *gotCustomerCode != "c1" {
+				t.Errorf("incorrect customer_code attribute, expected %#v got %#v", "c1", *gotCustomerCode)
 			}
-			got_host := m.MessageAttributes["host"].StringValue
-			if *got_host != "h1" {
-				t.Errorf("incorrect host attribute, expected %#v got %#v", "h1", *got_host)
+			gotHost := m.MessageAttributes["host"].StringValue
+			if *gotHost != "h1" {
+				t.Errorf("incorrect host attribute, expected %#v got %#v", "h1", *gotHost)
 			}
-			got_source := m.MessageAttributes["source"].StringValue
-			if *got_source != "s1" {
-				t.Errorf("incorrect source attribute, expected %#v got %#v", "s1", *got_source)
+			gotSource := m.MessageAttributes["source"].StringValue
+			if *gotSource != "s1" {
+				t.Errorf("incorrect source attribute, expected %#v got %#v", "s1", *gotSource)
 			}
-			got_source_environment := m.MessageAttributes["source_environment"].StringValue
-			if *got_source_environment != "se" {
-				t.Errorf("incorrect source_environment attribute, expected %#v got %#v", "st1", *got_source_environment)
+			gotSourceEnvironment := m.MessageAttributes["source_environment"].StringValue
+			if *gotSourceEnvironment != "se" {
+				t.Errorf("incorrect source_environment attribute, expected %#v got %#v", "st1", *gotSourceEnvironment)
 			}
-			got_sourcetype := m.MessageAttributes["sourcetype"].StringValue
-			if *got_sourcetype != "st1" {
-				t.Errorf("incorrect sourcetype attribute, expected %#v got %#v", "st1", *got_sourcetype)
+			gotSourcetype := m.MessageAttributes["sourcetype"].StringValue
+			if *gotSourcetype != "st1" {
+				t.Errorf("incorrect sourcetype attribute, expected %#v got %#v", "st1", *gotSourcetype)
 			}
 		},
 	)
-	t.Run("SnsMessage.Message",
+	t.Run("snsMessage.Message",
 		func(t *testing.T) {
-			var inner_message map[string]interface{}
-			err := json.Unmarshal([]byte(m.Message), &inner_message)
+			var innerMessage map[string]interface{}
+			err := json.Unmarshal([]byte(m.Message), &innerMessage)
 			if err != nil {
 				t.Error("json.Unmarshal error:", err)
 			}
-			if inner_message["host"].(string) != "h1" {
-				t.Errorf("incorrect host, expected %#v got %#v", "h1", inner_message["host"].(string))
+			if innerMessage["host"].(string) != "h1" {
+				t.Errorf("incorrect host, expected %#v got %#v", "h1", innerMessage["host"].(string))
 			}
-			if inner_message["index"].(string) != "idx1" {
-				t.Errorf("incorrect index, expected %#v got %#v", "idx1", inner_message["index"].(string))
+			if innerMessage["index"].(string) != "idx1" {
+				t.Errorf("incorrect index, expected %#v got %#v", "idx1", innerMessage["index"].(string))
 			}
-			if inner_message["source"].(string) != "s1" {
-				t.Errorf("incorrect source, expected %#v got %#v", "s1", inner_message["source"].(string))
+			if innerMessage["source"].(string) != "s1" {
+				t.Errorf("incorrect source, expected %#v got %#v", "s1", innerMessage["source"].(string))
 			}
-			if inner_message["sourcetype"].(string) != "st1" {
-				t.Errorf("incorrect sourcetype, expected %#v got %#v", "st1", inner_message["sourcetype"].(string))
+			if innerMessage["sourcetype"].(string) != "st1" {
+				t.Errorf("incorrect sourcetype, expected %#v got %#v", "st1", innerMessage["sourcetype"].(string))
 			}
 			timeString := now.Format(time.RFC3339Nano)
-			if inner_message["time"].(string) != timeString {
-				t.Errorf("incorrect time, expected %#v got %#v", timeString, inner_message["time"].(string))
+			if innerMessage["time"].(string) != timeString {
+				t.Errorf("incorrect time, expected %#v got %#v", timeString, innerMessage["time"].(string))
 			}
 		},
 	)

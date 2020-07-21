@@ -10,68 +10,75 @@ import (
 	"log"
 )
 
-type sess struct {
+// Sess stores sendamqp session state.
+type Sess struct {
 	amqpChan       *amqp.Channel
 	amqpConn       *amqp.Connection
 	amqpExchange   string
 	amqpRoutingKey string
-	amqpUrl        string
+	amqpURL        string
 	trace          bool
 }
 
-func (self *sess) CloseSvc() error {
-	if self.amqpConn == nil {
+// CloseSvc closes the open session.
+// CloseSvc must not be called when no session is open.
+func (sender *Sess) CloseSvc() error {
+	if sender.amqpConn == nil {
 		return errors.New("CloseSvc() called again or before OpenSvc(); that should not be done")
 	}
-	self.amqpChan = nil
-	self.amqpConn.Close()
-	self.amqpConn = nil
+	sender.amqpChan = nil
+	sender.amqpConn.Close()
+	sender.amqpConn = nil
 	return nil
 }
 
-func (self *sess) OpenSvc() error {
-	if self.amqpConn != nil || self.amqpChan != nil {
+// OpenSvc opens a new session.
+// OpenSvc must not be called when a session is already open.
+func (sender *Sess) OpenSvc() error {
+	if sender.amqpConn != nil || sender.amqpChan != nil {
 		return errors.New("OpenSvc() called again; that should not be done")
 	}
-	conn, err := amqp.Dial(self.amqpUrl)
+	conn, err := amqp.Dial(sender.amqpURL)
 	if err != nil {
 		return fmt.Errorf("amqp.Dial() failed: %v", err)
 	}
-	self.amqpConn = conn
+	sender.amqpConn = conn
 	ch, err := conn.Channel()
 	if err != nil {
 		return fmt.Errorf("amqp.Connection.Channel() failed: %v", err)
 	}
-	self.amqpChan = ch
+	sender.amqpChan = ch
 
 	// TODO create exchange here, if desired
 
 	return nil
 }
 
-func (self *sess) SendMessage(logEvent logevent.LogEvent) error {
-	if self.amqpChan == nil {
+// SendMessage sends a LogEvent to a RabbitMQ (AMQP) exchange.
+func (sender *Sess) SendMessage(logEvent logevent.LogEvent) error {
+	if sender.amqpChan == nil {
 		return errors.New("SendMessage() called before OpenSvc()")
 	}
 
-	amqpMessage := self.buildAmqpMessage(logEvent)
-	self.amqpChan.Publish(
-		self.amqpExchange,
-		self.amqpRoutingKey,
+	amqpMessage := sender.buildAmqpMessage(logEvent)
+	sender.amqpChan.Publish(
+		sender.amqpExchange,
+		sender.amqpRoutingKey,
 		false, // mandatory
 		false, // immediate
 		amqpMessage,
 	)
-	self.tracePretty("TRACE_SENDAMQP amqpMessage:", amqpMessage,
+	sender.tracePretty("TRACE_SENDAMQP amqpMessage:", amqpMessage,
 		"\nBody:", string(amqpMessage.Body))
 	return nil
 }
 
-func (self *sess) SetTrace(v bool) {
-	self.trace = v
+// SetTrace enables tracing, which dumps all messages to stderr.
+func (sender *Sess) SetTrace(v bool) {
+	sender.trace = v
 }
 
-func (self *sess) buildAmqpMessage(logEvent logevent.LogEvent) amqp.Publishing {
+func (sender *Sess) buildAmqpMessage(logEvent logevent.LogEvent) amqp.Publishing {
 	attr := logEvent.Attributes
 	headers := make(map[string]interface{})
 	if attr.CustomerCode != "" {
@@ -89,39 +96,41 @@ func (self *sess) buildAmqpMessage(logEvent logevent.LogEvent) amqp.Publishing {
 	if attr.Sourcetype != "" {
 		headers["sourcetype"] = attr.Sourcetype
 	}
-	messageJson_bytes, _ := json.Marshal(logEvent.Content)
+	messageJSONBytes, _ := json.Marshal(logEvent.Content)
 	amqpMessage := amqp.Publishing{
 		Headers:         headers,
 		ContentType:     "application/json",
 		ContentEncoding: "",
-		Body:            messageJson_bytes,
+		Body:            messageJSONBytes,
 		DeliveryMode:    amqp.Persistent,
 		Priority:        0,
 	}
 	return amqpMessage
 }
 
-func (self *sess) tracePretty(
+func (sender *Sess) tracePretty(
 	args ...interface{},
 ) {
-	if self.trace {
+	if sender.trace {
 		pretty.Log(args...)
 	}
 }
 
-func (self *sess) tracePrintln(
+func (sender *Sess) tracePrintln(
 	args ...interface{},
 ) {
-	if self.trace {
+	if sender.trace {
 		log.Println(args...)
 	}
 }
 
-func New(amqpUrl, amqpExchange, amqpRoutingKey string) *sess {
-	sess := sess{
+// New creates a new sendhec object/session.
+// It requires an AMQP URL/URI (which may contain username, password, host, port, and/or vhost), exchange name, and routing key.
+func New(amqpURL, amqpExchange, amqpRoutingKey string) *Sess {
+	sess := Sess{
 		amqpExchange:   amqpExchange,
 		amqpRoutingKey: amqpRoutingKey,
-		amqpUrl:        amqpUrl,
+		amqpURL:        amqpURL,
 	}
 	return &sess
 }

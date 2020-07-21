@@ -8,63 +8,68 @@ import (
 	"time"
 )
 
-// structs
-
-type sess struct {
+// Sess stores senddump session state.
+type Sess struct {
 	initialized bool
 	trace       bool
 }
 
-// function(s)
-
-func (self *sess) CloseSvc() error {
-	if !self.initialized {
+// CloseSvc closes the open session.
+// CloseSvc must not be called when no session is open.
+func (sender *Sess) CloseSvc() error {
+	if !sender.initialized {
 		return errors.New("CloseSvc() called again or before OpenSvc(); that should not be done")
 	}
-	self.initialized = false
+	sender.initialized = false
 	return nil
 }
 
-func (self *sess) OpenSvc() error {
-	if self.initialized {
+// OpenSvc opens a new session.
+// OpenSvc must not be called when a session is already open.
+func (sender *Sess) OpenSvc() error {
+	if sender.initialized {
 		return errors.New("OpenSvc() called again; that should not be done")
 	}
-	self.initialized = true
+	sender.initialized = true
 	return nil
 }
 
-func (self *sess) SendMessage(logEvent logevent.LogEvent) error {
-	if !self.initialized {
+// SendMessage dumps a LogEvent to stderr when tracing is enabled.
+// No output is generated unless tracing is enabled.
+func (sender *Sess) SendMessage(logEvent logevent.LogEvent) error {
+	if !sender.initialized {
 		return errors.New("SendMessage() called before OpenSvc()")
 	}
 	timeString := logEvent.Content.Time.UTC().Format(time.RFC3339)
 	logEvent.Content.Time = time.Time{}
-	self.tracePretty("TRACE_SENDER time =", timeString,
+	sender.tracePretty("TRACE_SENDER time =", timeString,
 		" logEvent =", logEvent)
 	return nil
 }
 
-func (self *sess) SetTrace(v bool) {
-	self.trace = v
+// SetTrace enables tracing, which dumps all messages to stderr.
+func (sender *Sess) SetTrace(v bool) {
+	sender.trace = v
 }
 
-func (self *sess) tracePretty(
+func (sender *Sess) tracePretty(
 	args ...interface{},
 ) {
-	if self.trace {
+	if sender.trace {
 		pretty.Log(args...)
 	}
 }
 
-func (self *sess) tracePrintln(
+func (sender *Sess) tracePrintln(
 	args ...interface{},
 ) {
-	if self.trace {
+	if sender.trace {
 		log.Println(args...)
 	}
 }
 
-func New() *sess {
-	sess := sess{}
+// New creates a new senddump object/session.
+func New() *Sess {
+	sess := Sess{}
 	return &sess
 }
