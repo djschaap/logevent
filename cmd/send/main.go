@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"github.com/djschaap/logevent"
 	"github.com/djschaap/logevent/flagarray"
-	"github.com/djschaap/logevent/sendamqp"
-	"github.com/djschaap/logevent/senddump"
-	"github.com/djschaap/logevent/sendhec"
-	"github.com/djschaap/logevent/sendsns"
+	"github.com/djschaap/logevent/fromenv"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -21,14 +18,6 @@ var (
 	commit  string
 	version string
 )
-
-func getenvBool(k string) bool {
-	v := os.Getenv(k)
-	if len(v) > 0 {
-		return true
-	}
-	return false
-}
 
 func printVersion() {
 	fmt.Println("logevent send  Version:",
@@ -57,64 +46,19 @@ func main() {
 
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error loading .env file:", err)
+	}
+	sender, err := fromenv.GetMessageSenderFromEnv()
+	if err != nil {
+		log.Fatal("Error initializing output:", err)
 	}
 
-	senderPackage := os.Getenv("PACKAGE")
-	var traceOutput bool
-	if len(os.Getenv("TRACE")) > 0 {
-		fmt.Println("*** TRACE is enabled ***")
-		traceOutput = true
-	}
-
-	var sender logevent.MessageSender
-	if senderPackage == "sendamqp" {
-		amqpURL := os.Getenv("AMQP_URL")
-		amqpExchange := os.Getenv("AMQP_EXCHANGE")
-		amqpRoutingKey := os.Getenv("AMQP_ROUTING_KEY")
-		if len(amqpRoutingKey) <= 0 {
-			log.Println("WARNING: sendamqp requires AMQP_ROUTING_KEY; continuing anyway")
-		}
-		amqpSender := sendamqp.New(amqpURL, amqpExchange, amqpRoutingKey)
-		sender = amqpSender
-	} else if senderPackage == "senddump" || senderPackage == "" {
-		sender = senddump.New()
-	} else if senderPackage == "sendhec" {
-		hecURL := os.Getenv("HEC_URL")
-		hecToken := os.Getenv("HEC_TOKEN")
-		if len(hecToken) <= 0 {
-			log.Fatal("Splunk HEC_TOKEN must be specified")
-		}
-		hecSender := sendhec.New(hecURL, hecToken)
-		if len(os.Getenv("HEC_INSECURE")) > 0 {
-			hecSender.SetHecInsecure(true)
-		}
-		sender = hecSender
-	} else if senderPackage == "sendsns" {
-		// github.com/aws/aws-sdk-go/aws reads env vars itself
-		//aws_access_key_id := os.Getenv("AWS_ACCESS_KEY_ID")
-		//aws_region := os.Getenv("AWS_REGION")
-		//aws_secret_access_key := os.Getenv("AWS_SECRET_ACCESS_KEY")
-		topicString := os.Getenv("TOPIC")
-		hasQueue, _ := regexp.MatchString(`^arn:`, topicString)
-		if !hasQueue {
-			log.Println("WARNING: sendsns requires TOPIC; continuing anyway")
-		}
-		sender = sendsns.New(topicString)
-	} else {
-		log.Fatal("package ", senderPackage, " is not valid")
-	}
-
-	if traceOutput {
-		sender.SetTrace(true)
-	}
 	messageContent := flag.Arg(0)
 	logEvent := logevent.LogEvent{
 		Content: logevent.MessageContent{
 			Event: messageContent,
 		},
 	}
-
 	if *customerCode != "" {
 		logEvent.Attributes.CustomerCode = *customerCode
 	}
