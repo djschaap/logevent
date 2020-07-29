@@ -128,6 +128,7 @@ func Test_formatLogEvent_simple_LogEvent(t *testing.T) {
 			Source:            "s1",
 			SourceEnvironment: "se",
 			Sourcetype:        "st1",
+			Type:              "t1",
 		},
 		Content: logevent.MessageContent{
 			Event: "my event",

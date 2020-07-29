@@ -19,6 +19,7 @@ type Attributes struct {
 	Source            string `json:"source,omitempty"`
 	SourceEnvironment string `json:"source_environment,omitempty"`
 	Sourcetype        string `json:"sourcetype,omitempty"`
+	Type              string
 }
 
 // LogEvent contains a single log message, made up of attributes/headers and message content.

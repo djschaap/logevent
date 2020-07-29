@@ -102,6 +102,10 @@ func Test_buildAmqpMessage_empty_LogEvent(t *testing.T) {
 				val := m.Headers["sourcetype"]
 				t.Errorf("incorrect sourcetype attribute, expected \"\" got %#v", val.(string))
 			}
+			gotType := m.Type
+			if gotType != "" {
+				t.Errorf("incorrect type attribute, expected \"\" got %#v", gotType)
+			}
 		},
 	)
 	t.Run("Body",
@@ -140,6 +144,7 @@ func Test_buildAmqpMessage_simple_LogEvent(t *testing.T) {
 			Source:            "s1",
 			SourceEnvironment: "se",
 			Sourcetype:        "st1",
+			Type:              "t1",
 		},
 		Content: logevent.MessageContent{
 			Host:       "h1",
@@ -174,6 +179,10 @@ func Test_buildAmqpMessage_simple_LogEvent(t *testing.T) {
 			gotSourcetype := m.Headers["sourcetype"]
 			if gotSourcetype != "st1" {
 				t.Errorf("incorrect sourcetype attribute, expected %#v got %#v", "st1", gotSourcetype)
+			}
+			gotType := m.Type
+			if gotType != "t1" {
+				t.Errorf("incorrect type attribute, expected %#v got %#v", "t1", gotType)
 			}
 		},
 	)

@@ -105,6 +105,9 @@ func (sender *Sess) buildAmqpMessage(logEvent logevent.LogEvent) amqp.Publishing
 		DeliveryMode:    amqp.Persistent,
 		Priority:        0,
 	}
+	if attr.Type != "" {
+		amqpMessage.Type = attr.Type
+	}
 	return amqpMessage
 }
 

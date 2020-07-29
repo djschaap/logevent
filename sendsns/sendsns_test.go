@@ -143,6 +143,7 @@ func Test_buildSnsMessage_simple_LogEvent(t *testing.T) {
 			Source:            "s1",
 			SourceEnvironment: "se",
 			Sourcetype:        "st1",
+			Type:              "t1",
 		},
 		Content: logevent.MessageContent{
 			Host:       "h1",
