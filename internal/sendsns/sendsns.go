@@ -107,6 +107,12 @@ func (sender *Sess) buildSnsMessage(logEvent logevent.LogEvent) snsMessage {
 			StringValue: aws.String(attr.Sourcetype),
 		}
 	}
+	if attr.Type != "" {
+		messageAttributes["type"] = &sns.MessageAttributeValue{
+			DataType:    aws.String("String"),
+			StringValue: aws.String(attr.Type),
+		}
+	}
 	messageJSONBytes, _ := json.Marshal(logEvent.Content)
 	snsMsg := snsMessage{
 		Message:           string(messageJSONBytes),

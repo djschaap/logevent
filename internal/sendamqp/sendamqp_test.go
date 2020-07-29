@@ -84,23 +84,27 @@ func Test_buildAmqpMessage_empty_LogEvent(t *testing.T) {
 		func(t *testing.T) {
 			if m.Headers["customer_code"] != nil {
 				val := m.Headers["customer_code"]
-				t.Errorf("incorrect customer_code attribute, expected \"\" got %#v", val.(string))
+				t.Errorf("incorrect customer_code header, expected \"\" got %#v", val.(string))
 			}
 			if m.Headers["host"] != nil {
 				val := m.Headers["host"]
-				t.Errorf("incorrect host attribute, expected \"\" got %#v", val.(string))
+				t.Errorf("incorrect host header, expected \"\" got %#v", val.(string))
 			}
 			if m.Headers["source"] != nil {
 				val := m.Headers["source"]
-				t.Errorf("incorrect source attribute, expected \"\" got %#v", val.(string))
+				t.Errorf("incorrect source header, expected \"\" got %#v", val.(string))
 			}
 			if m.Headers["source_environment"] != nil {
 				val := m.Headers["source_environment"]
-				t.Errorf("incorrect source_environment attribute, expected \"\" got %#v", val.(string))
+				t.Errorf("incorrect source_environment header, expected \"\" got %#v", val.(string))
 			}
 			if m.Headers["sourcetype"] != nil {
 				val := m.Headers["sourcetype"]
-				t.Errorf("incorrect sourcetype attribute, expected \"\" got %#v", val.(string))
+				t.Errorf("incorrect sourcetype header, expected \"\" got %#v", val.(string))
+			}
+			if m.Headers["type"] != nil {
+				val := m.Headers["type"]
+				t.Errorf("incorrect type header, expected \"\" got %#v", val.(string))
 			}
 			gotType := m.Type
 			if gotType != "" {
@@ -162,27 +166,31 @@ func Test_buildAmqpMessage_simple_LogEvent(t *testing.T) {
 		func(t *testing.T) {
 			gotCustomerCode := m.Headers["customer_code"]
 			if gotCustomerCode != "c1" {
-				t.Errorf("incorrect customer_code attribute, expected %#v got %#v", "c1", gotCustomerCode)
+				t.Errorf("incorrect customer_code header, expected %#v got %#v", "c1", gotCustomerCode)
 			}
 			gotHost := m.Headers["host"]
 			if gotHost != "h1" {
-				t.Errorf("incorrect host attribute, expected %#v got %#v", "h1", gotHost)
+				t.Errorf("incorrect host header, expected %#v got %#v", "h1", gotHost)
 			}
 			gotSource := m.Headers["source"]
 			if gotSource != "s1" {
-				t.Errorf("incorrect source attribute, expected %#v got %#v", "s1", gotSource)
+				t.Errorf("incorrect source header, expected %#v got %#v", "s1", gotSource)
 			}
 			gotSourceEnvironment := m.Headers["source_environment"]
 			if gotSourceEnvironment != "se" {
-				t.Errorf("incorrect source_environment attribute, expected %#v got %#v", "st1", gotSourceEnvironment)
+				t.Errorf("incorrect source_environment header, expected %#v got %#v", "st1", gotSourceEnvironment)
 			}
 			gotSourcetype := m.Headers["sourcetype"]
 			if gotSourcetype != "st1" {
-				t.Errorf("incorrect sourcetype attribute, expected %#v got %#v", "st1", gotSourcetype)
+				t.Errorf("incorrect sourcetype header, expected %#v got %#v", "st1", gotSourcetype)
 			}
-			gotType := m.Type
-			if gotType != "t1" {
-				t.Errorf("incorrect type attribute, expected %#v got %#v", "t1", gotType)
+			gotTypeHeader := m.Headers["type"]
+			if gotTypeHeader != "t1" {
+				t.Errorf("incorrect type header, expected %#v got %#v", "t1", gotTypeHeader)
+			}
+			gotTypeAttr := m.Type
+			if gotTypeAttr != "t1" {
+				t.Errorf("incorrect type header, expected %#v got %#v", "t1", gotTypeAttr)
 			}
 		},
 	)

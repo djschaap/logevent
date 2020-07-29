@@ -102,6 +102,10 @@ func Test_buildSnsMessage_empty_LogEvent(t *testing.T) {
 				val := m.MessageAttributes["sourcetype"].StringValue
 				t.Errorf("incorrect sourcetype attribute, expected \"\" got %#v", *val)
 			}
+			if m.MessageAttributes["type"] != nil {
+				val := m.MessageAttributes["type"].StringValue
+				t.Errorf("incorrect type attribute, expected \"\" got %#v", *val)
+			}
 		},
 	)
 	t.Run("snsMessage.Message",
@@ -178,6 +182,10 @@ func Test_buildSnsMessage_simple_LogEvent(t *testing.T) {
 			gotSourcetype := m.MessageAttributes["sourcetype"].StringValue
 			if *gotSourcetype != "st1" {
 				t.Errorf("incorrect sourcetype attribute, expected %#v got %#v", "st1", *gotSourcetype)
+			}
+			gotType := m.MessageAttributes["type"].StringValue
+			if *gotType != "t1" {
+				t.Errorf("incorrect type attribute, expected %#v got %#v", "st1", *gotType)
 			}
 		},
 	)

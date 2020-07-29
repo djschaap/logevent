@@ -96,6 +96,9 @@ func (sender *Sess) buildAmqpMessage(logEvent logevent.LogEvent) amqp.Publishing
 	if attr.Sourcetype != "" {
 		headers["sourcetype"] = attr.Sourcetype
 	}
+	if attr.Type != "" {
+		headers["type"] = attr.Type
+	}
 	messageJSONBytes, _ := json.Marshal(logEvent.Content)
 	amqpMessage := amqp.Publishing{
 		Headers:         headers,
