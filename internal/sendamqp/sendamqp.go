@@ -14,6 +14,7 @@ import (
 type Sess struct {
 	amqpChan       *amqp.Channel
 	amqpConn       *amqp.Connection
+	amqpError      chan *amqp.Error
 	amqpExchange   string
 	amqpRoutingKey string
 	amqpURL        string
@@ -43,6 +44,8 @@ func (sender *Sess) OpenSvc() error {
 		return fmt.Errorf("amqp.Dial() failed: %v", err)
 	}
 	sender.amqpConn = conn
+	sender.amqpError = conn.NotifyClose(make(chan *amqp.Error))
+
 	ch, err := conn.Channel()
 	if err != nil {
 		return fmt.Errorf("amqp.Connection.Channel() failed: %v", err)
@@ -58,6 +61,12 @@ func (sender *Sess) OpenSvc() error {
 func (sender *Sess) SendMessage(logEvent logevent.LogEvent) error {
 	if sender.amqpChan == nil {
 		return errors.New("SendMessage() called before OpenSvc()")
+	}
+
+	select {
+	case err := <-sender.amqpError:
+		return fmt.Errorf("AMQP connection closed unexpectedly: %s", err)
+	default:
 	}
 
 	amqpMessage := sender.buildAmqpMessage(logEvent)

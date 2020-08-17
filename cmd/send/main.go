@@ -118,7 +118,7 @@ func main() {
 
 		err = sender.SendMessage(logEvent)
 		if err != nil {
-			log.Fatal("Error from SendMessage:", err)
+			log.Fatal("Error from SendMessage: ", err)
 		}
 	}
 }
