@@ -14,6 +14,7 @@ go test -coverprofile=coverage.out ./... \
   && go tool cover -html=coverage.out
 
 # sendamqp integration tests
+docker run --rm -p 5672:5672 -p 15672:15672 rabbitmq:management-alpine
 AMQP_URL=amqp://guest:guest@localhost:5672 \
   go test -tags amqp ./...
 ```

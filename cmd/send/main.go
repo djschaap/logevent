@@ -28,6 +28,8 @@ func printVersion() {
 func main() {
 	printVersion()
 
+	eventCount := flag.Int("count", 1, "send N events")
+	repeatDelay := flag.Int("delay", 1, "delay N seconds between events")
 	customerCode := flag.String("customer", "", "set customer code attribute")
 	epochAttr := flag.Int64("epoch", 0, "time_t/epoch, as 64-bit int")
 	var fieldArgs flagarray.StringArray
@@ -52,63 +54,71 @@ func main() {
 	if err != nil {
 		log.Fatal("Error initializing output:", err)
 	}
-
-	messageContent := flag.Arg(0)
-	logEvent := logevent.LogEvent{
-		Content: logevent.MessageContent{
-			Event: messageContent,
-		},
-	}
-	if *customerCode != "" {
-		logEvent.Attributes.CustomerCode = *customerCode
-	}
-	if *hostAttr != "" {
-		logEvent.Attributes.Host = *hostAttr
-		logEvent.Content.Host = *hostAttr
-	}
-	if *indexAttr != "" {
-		logEvent.Content.Index = *indexAttr
-	}
-	if *sourceAttr != "" {
-		logEvent.Attributes.Source = *sourceAttr
-		logEvent.Content.Source = *sourceAttr
-	}
-	if *sourceEnvironmentAttr != "" {
-		logEvent.Attributes.SourceEnvironment = *sourceEnvironmentAttr
-	}
-	if *sourcetypeAttr != "" {
-		logEvent.Attributes.Sourcetype = *sourcetypeAttr
-		logEvent.Content.Sourcetype = *sourcetypeAttr
-	}
-	if *epochAttr > 0 {
-		t := time.Unix(*epochAttr, 0)
-		logEvent.Content.Time = t
-	} else if *timeAttr != "" {
-		t, err := time.Parse(time.RFC3339, *timeAttr)
-		if err != nil {
-			log.Fatal(err)
-		}
-		logEvent.Content.Time = t
-	}
-
-	logEvent.Content.Fields = make(map[string]interface{})
-	for _, rawPair := range fieldArgs {
-		re := regexp.MustCompile(`(\S+?)=(.+)`)
-		kv := re.FindStringSubmatch(rawPair)
-		if len(kv) < 2 {
-			log.Fatal("unable to parse field/value: ", rawPair)
-		}
-		//log.Printf("field: k=%s v=%s\n", kv[1], kv[2]) // DEBUG
-		logEvent.Content.Fields[kv[1]] = kv[2]
-	}
-
 	err = sender.OpenSvc()
 	if err != nil {
 		log.Fatal("Error from OpenSvc:", err)
 	}
 	defer sender.CloseSvc()
-	err = sender.SendMessage(logEvent)
-	if err != nil {
-		log.Fatal("Error from SendMessage:", err)
+
+	for i := 0; i < *eventCount; i++ {
+		if i > 0 {
+			// delay before any additional events
+			//log.Println("sleeping...") // DEBUG
+			time.Sleep(time.Duration(*repeatDelay) * time.Second)
+		}
+
+		messageContent := flag.Arg(0)
+		logEvent := logevent.LogEvent{
+			Content: logevent.MessageContent{
+				Event: messageContent,
+			},
+		}
+		if *customerCode != "" {
+			logEvent.Attributes.CustomerCode = *customerCode
+		}
+		if *hostAttr != "" {
+			logEvent.Attributes.Host = *hostAttr
+			logEvent.Content.Host = *hostAttr
+		}
+		if *indexAttr != "" {
+			logEvent.Content.Index = *indexAttr
+		}
+		if *sourceAttr != "" {
+			logEvent.Attributes.Source = *sourceAttr
+			logEvent.Content.Source = *sourceAttr
+		}
+		if *sourceEnvironmentAttr != "" {
+			logEvent.Attributes.SourceEnvironment = *sourceEnvironmentAttr
+		}
+		if *sourcetypeAttr != "" {
+			logEvent.Attributes.Sourcetype = *sourcetypeAttr
+			logEvent.Content.Sourcetype = *sourcetypeAttr
+		}
+		if *epochAttr > 0 {
+			t := time.Unix(*epochAttr, 0)
+			logEvent.Content.Time = t
+		} else if *timeAttr != "" {
+			t, err := time.Parse(time.RFC3339, *timeAttr)
+			if err != nil {
+				log.Fatal(err)
+			}
+			logEvent.Content.Time = t
+		}
+
+		logEvent.Content.Fields = make(map[string]interface{})
+		for _, rawPair := range fieldArgs {
+			re := regexp.MustCompile(`(\S+?)=(.+)`)
+			kv := re.FindStringSubmatch(rawPair)
+			if len(kv) < 2 {
+				log.Fatal("unable to parse field/value: ", rawPair)
+			}
+			//log.Printf("field: k=%s v=%s\n", kv[1], kv[2]) // DEBUG
+			logEvent.Content.Fields[kv[1]] = kv[2]
+		}
+
+		err = sender.SendMessage(logEvent)
+		if err != nil {
+			log.Fatal("Error from SendMessage:", err)
+		}
 	}
 }
