@@ -2,36 +2,11 @@ package fromenv
 
 import (
 	"fmt"
-	//"github.com/djschaap/logevent"
 	"testing"
 )
 
-// os.Getenv mocking concept from alexellis
-// https://gist.github.com/alexellis/adc67eb022b7fdca31afc0de6529e5ea
-type fakeEnv struct {
-	values map[string]string
-}
-
-func (env fakeEnv) Getenv(k string) string {
-	return env.values[k]
-}
-
-func (env fakeEnv) Setenv(k string, v string) {
-	env.values[k] = v
-}
-
-func (env fakeEnv) Unsetenv(k string) {
-	delete(env.values, k)
-}
-
-func newFakeEnv() fakeEnv {
-	e := fakeEnv{}
-	e.values = make(map[string]string)
-	return e
-}
-
 func TestGetenvBool(t *testing.T) {
-	env = newFakeEnv()
+	env = NewFakeEnv()
 
 	env.Setenv("LOGEVENT_UNIT_TEST_FALSE", "false")
 	env.Setenv("LOGEVENT_UNIT_TEST_N", "n")
@@ -91,7 +66,7 @@ func TestGetenvBool(t *testing.T) {
 func TestGetMessageSenderFromEnv(t *testing.T) {
 	t.Run("no SENDER_PACKAGE",
 		func(t *testing.T) {
-			env = newFakeEnv()
+			env = NewFakeEnv()
 			env.Setenv("SENDER_TRACE", "x")
 			s, err := GetMessageSenderFromEnv()
 			if err != nil {
@@ -108,7 +83,7 @@ func TestGetMessageSenderFromEnv(t *testing.T) {
 
 	t.Run("invalid SENDER_PACKAGE",
 		func(t *testing.T) {
-			env = newFakeEnv()
+			env = NewFakeEnv()
 			env.Setenv("SENDER_PACKAGE", "i do not exist")
 			expectedError := "FATAL: SENDER_PACKAGE i do not exist is not valid"
 			s, err := GetMessageSenderFromEnv()
@@ -124,7 +99,7 @@ func TestGetMessageSenderFromEnv(t *testing.T) {
 
 	t.Run("minimal sendamqp",
 		func(t *testing.T) {
-			env = newFakeEnv()
+			env = NewFakeEnv()
 			env.Setenv("AMQP_ROUTING_KEY", "x")
 			env.Setenv("SENDER_PACKAGE", "sendamqp")
 			s, err := GetMessageSenderFromEnv()
@@ -142,7 +117,7 @@ func TestGetMessageSenderFromEnv(t *testing.T) {
 
 	t.Run("sendhec w/out token",
 		func(t *testing.T) {
-			env = newFakeEnv()
+			env = NewFakeEnv()
 			env.Setenv("SENDER_PACKAGE", "sendhec")
 			expectedError := "FATAL: sendhec requires HEC_TOKEN"
 			s, err := GetMessageSenderFromEnv()
@@ -158,7 +133,7 @@ func TestGetMessageSenderFromEnv(t *testing.T) {
 
 	t.Run("minimal sendhec",
 		func(t *testing.T) {
-			env = newFakeEnv()
+			env = NewFakeEnv()
 			env.Setenv("HEC_TOKEN", "x")
 			env.Setenv("SENDER_PACKAGE", "sendhec")
 			s, err := GetMessageSenderFromEnv()
@@ -176,7 +151,7 @@ func TestGetMessageSenderFromEnv(t *testing.T) {
 
 	t.Run("minimal sendsns",
 		func(t *testing.T) {
-			env = newFakeEnv()
+			env = NewFakeEnv()
 			env.Setenv("AWS_SNS_TOPIC", "x")
 			env.Setenv("SENDER_PACKAGE", "sendsns")
 			s, err := GetMessageSenderFromEnv()
