@@ -30,30 +30,6 @@ func TestNew(t *testing.T) {
 	)
 }
 
-func TestRepeatedOpenAndClose(t *testing.T) {
-	obj := New("amqp://localhost", "exch", "rk")
-
-	err := obj.OpenSvc()
-	if err != nil {
-		t.Errorf("OpenSvc() returned unexpected error %v", err)
-	}
-
-	err = obj.OpenSvc()
-	if err == nil {
-		t.Error("expected error from OpenSvc() but got nil")
-	}
-
-	err = obj.CloseSvc()
-	if err != nil {
-		t.Errorf("CloseSvc() returned unexpected error %v", err)
-	}
-
-	err = obj.CloseSvc()
-	if err == nil {
-		t.Error("expected error from CloseSvc() but got nil")
-	}
-}
-
 func TestSetTrace(t *testing.T) {
 	obj := New("u", "e", "rk")
 	if obj.trace != false {
