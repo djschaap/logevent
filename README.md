@@ -26,7 +26,7 @@ The send executable is included as a sample tool to send messages.
 Environment variables are used for output/package configuration.
 Command-line arguments are used for message/event-specific properties.
 
-Currently, setting boolean variables (SENDER\_TRACE, etc.) to ANYTHING
+Currently, setting boolean variables (`SENDER_TRACE`, etc.) to ANYTHING
 other than the empty string will be interpreted as true.
 This may change without notice; using zero, "N", or similar to
 represent true is NOT recommended.
@@ -35,13 +35,15 @@ represent true is NOT recommended.
 
 Send message to RabbitMQ exchange.
 Exchange must already exist.
-AMQP\_ROUTING\_KEY may be meaningless when using a headers exchange,
+`AMQP_ROUTING_KEY` may be meaningless when using a headers exchange,
 but some value must still be provided.
+`AMQP_TTL` is specified in seconds (default is no TTL).
 
 ```bash
 export AMQP_URL=amqp://guest:guest@localhost:5672
 export AMQP_EXCHANGE=amq.headers
 export AMQP_ROUTING_KEY=the_weather
+export AMQP_TTL=60
 SENDER_PACKAGE=sendamqp SENDER_TRACE=x go run cmd/send/main.go \
   -host h2 \
   "message with host"
@@ -50,7 +52,7 @@ SENDER_PACKAGE=sendamqp SENDER_TRACE=x go run cmd/send/main.go \
 ### senddump Package
 
 Dump message to stderr for debug purposes.
-Default package when SENDER\_PACKAGE is not set.
+Default package when `SENDER_PACKAGE` is not set.
 
 ```bash
 SENDER_TRACE=x go run cmd/send/main.go \
@@ -74,7 +76,7 @@ SENDER_TRACE=x go run cmd/send/main.go \
 ### sendhec Package
 
 Send message directly to Splunk HTTP Event Collector (HEC).
-HEC\_TOKEN is required.
+`HEC_TOKEN` is required.
 
 ```bash
 export HEC_URL=https://localhost:8088
@@ -88,7 +90,7 @@ SENDER_PACKAGE=sendhec SENDER_TRACE=x go run cmd/send/main.go \
 ### sendsns Package
 
 Send message to Amazon SNS topic.
-AWS\_SNS\_TOPIC is required.
+`AWS_SNS_TOPIC` is required.
 
 ```bash
 export AWS_ACCESS_KEY_ID=xxx

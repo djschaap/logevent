@@ -8,6 +8,7 @@ import (
 	"github.com/kr/pretty"
 	"github.com/streadway/amqp"
 	"log"
+	"strconv"
 )
 
 // Sess stores sendamqp session state.
@@ -17,6 +18,7 @@ type Sess struct {
 	amqpError      chan *amqp.Error
 	amqpExchange   string
 	amqpRoutingKey string
+	amqpTtl        string
 	amqpURL        string
 	trace          bool
 }
@@ -110,12 +112,20 @@ func (sender *Sess) buildAmqpMessage(logEvent logevent.LogEvent) amqp.Publishing
 	}
 	messageJSONBytes, _ := json.Marshal(logEvent.Content)
 	amqpMessage := amqp.Publishing{
-		Headers:         headers,
-		ContentType:     "application/json",
-		ContentEncoding: "",
 		Body:            messageJSONBytes,
+		ContentEncoding: "",
+		ContentType:     "application/json",
 		DeliveryMode:    amqp.Persistent,
+		Headers:         headers,
 		Priority:        0,
+	}
+	if sender.amqpTtl != "" {
+		ttl, err := strconv.Atoi(sender.amqpTtl)
+		if err != nil {
+			log.Printf("Unable to convert AMQP_TTL [%s] to int; ignoring\n", sender.amqpTtl)
+		} else {
+			amqpMessage.Expiration = fmt.Sprint(ttl * 1000) // convert s to ms
+		}
 	}
 	if attr.Type != "" {
 		amqpMessage.Type = attr.Type
@@ -141,10 +151,11 @@ func (sender *Sess) tracePrintln(
 
 // New creates a new sendhec object/session.
 // It requires an AMQP URL/URI (which may contain username, password, host, port, and/or vhost), exchange name, and routing key.
-func New(amqpURL, amqpExchange, amqpRoutingKey string) *Sess {
+func New(amqpURL, amqpExchange, amqpRoutingKey, amqpTtl string) *Sess {
 	sess := Sess{
 		amqpExchange:   amqpExchange,
 		amqpRoutingKey: amqpRoutingKey,
+		amqpTtl:        amqpTtl,
 		amqpURL:        amqpURL,
 	}
 	return &sess

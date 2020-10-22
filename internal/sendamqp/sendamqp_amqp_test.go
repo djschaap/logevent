@@ -13,7 +13,7 @@ func TestOpenSvc(t *testing.T) {
 	amqpUrl := os.Getenv("AMQP_URL")
 	t.Run("with no args",
 		func(t *testing.T) {
-			obj := New(amqpUrl, "exch-unsed", "rk-unused")
+			obj := New(amqpUrl, "exch-unsed", "rk-unused", "")
 			err := obj.OpenSvc()
 			if err != nil {
 				t.Errorf("OpenSvc() returned err: %s", err)
@@ -27,13 +27,13 @@ func TestOpenSvc(t *testing.T) {
 	)
 	t.Run("implements MessageSender",
 		func(t *testing.T) {
-			var _ logevent.MessageSender = New("u", "e", "t")
+			var _ logevent.MessageSender = New("u", "e", "t", "")
 		},
 	)
 }
 
 func TestRepeatedOpenAndClose(t *testing.T) {
-	obj := New("amqp://localhost", "exch", "rk")
+	obj := New("amqp://localhost", "exch", "rk", "")
 
 	err := obj.OpenSvc()
 	if err != nil {
@@ -58,7 +58,7 @@ func TestRepeatedOpenAndClose(t *testing.T) {
 
 func TestSendMessage_empty(t *testing.T) {
 	amqpUrl := os.Getenv("AMQP_URL")
-	obj := New(amqpUrl, "amq.headers", "sendamqp_amqp_test_discard")
+	obj := New(amqpUrl, "amq.headers", "sendamqp_amqp_test_discard", "")
 	logEvent := logevent.LogEvent{}
 
 	err := obj.SendMessage(logEvent)
@@ -79,7 +79,7 @@ func TestSendMessage_empty(t *testing.T) {
 
 func TestSendMessage_simple(t *testing.T) {
 	amqpUrl := os.Getenv("AMQP_URL")
-	obj := New(amqpUrl, "amq.headers", "sendamqp_amqp_test_discard")
+	obj := New(amqpUrl, "amq.headers", "sendamqp_amqp_test_discard", "")
 	err := obj.OpenSvc()
 	if err != nil {
 		t.Errorf("OpenSvc() returned unexpected err: %s", err)

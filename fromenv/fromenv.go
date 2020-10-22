@@ -57,10 +57,11 @@ func GetMessageSenderFromEnv() (logevent.MessageSender, error) {
 		amqpURL := env.Getenv("AMQP_URL")
 		amqpExchange := env.Getenv("AMQP_EXCHANGE")
 		amqpRoutingKey := env.Getenv("AMQP_ROUTING_KEY")
+		amqpTtl := env.Getenv("AMQP_TTL")
 		if len(amqpRoutingKey) <= 0 {
 			log.Println("WARNING: sendamqp requires AMQP_ROUTING_KEY; continuing anyway")
 		}
-		amqpSender := sendamqp.New(amqpURL, amqpExchange, amqpRoutingKey)
+		amqpSender := sendamqp.New(amqpURL, amqpExchange, amqpRoutingKey, amqpTtl)
 		sender = amqpSender
 	} else if senderPackage == "sendhec" {
 		hecURL := env.Getenv("HEC_URL")

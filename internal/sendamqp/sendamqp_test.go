@@ -11,7 +11,7 @@ import (
 func TestNew(t *testing.T) {
 	t.Run("with no args",
 		func(t *testing.T) {
-			obj := New("amqp://localhost", "exch", "rk")
+			obj := New("amqp://localhost", "exch", "rk", "")
 			if obj.trace == true {
 				t.Errorf("expected trace=false, got %s", strconv.FormatBool(obj.trace))
 			}
@@ -25,13 +25,13 @@ func TestNew(t *testing.T) {
 	)
 	t.Run("implements MessageSender",
 		func(t *testing.T) {
-			var _ logevent.MessageSender = New("u", "e", "rk")
+			var _ logevent.MessageSender = New("u", "e", "rk", "")
 		},
 	)
 }
 
 func TestSetTrace(t *testing.T) {
-	obj := New("u", "e", "rk")
+	obj := New("u", "e", "rk", "")
 	if obj.trace != false {
 		t.Errorf("expected initial trace=false, got %s",
 			strconv.FormatBool(obj.trace))
@@ -54,8 +54,11 @@ func Test_buildAmqpMessage_empty_LogEvent(t *testing.T) {
 			// empty!
 		},
 	}
-	obj := New("u", "e", "rk")
+	obj := New("u", "e", "rk", "")
 	m := obj.buildAmqpMessage(logEvent)
+	if m.Expiration != "" {
+		t.Errorf("expected no expiration but got %#v", m.Expiration)
+	}
 	t.Run("Headers",
 		func(t *testing.T) {
 			if m.Headers["customer_code"] != nil {
@@ -136,8 +139,11 @@ func Test_buildAmqpMessage_simple_LogEvent(t *testing.T) {
 			//Fields: {},
 		},
 	}
-	obj := New("u", "e", "rk")
+	obj := New("u", "e", "rk", "2")
 	m := obj.buildAmqpMessage(logEvent)
+	if m.Expiration != "2000" {
+		t.Errorf("expected Expiration=\"2000\" ms but got %#v", m.Expiration)
+	}
 	t.Run("Headers",
 		func(t *testing.T) {
 			gotCustomerCode := m.Headers["customer_code"]
