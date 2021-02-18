@@ -67,7 +67,12 @@ func (sender *Sess) SendMessage(logEvent logevent.LogEvent) error {
 
 	select {
 	case err := <-sender.amqpError:
-		return fmt.Errorf("AMQP connection closed unexpectedly: %s", err)
+		closeErr := sender.CloseSvc()
+		if closeErr != nil {
+			return fmt.Errorf("AMQP connection closed unexpectedly: %s; ALSO got error from CloseSvc: %s", err, closeErr)
+		} else {
+			return fmt.Errorf("AMQP connection closed unexpectedly: %s", err)
+		}
 	default:
 	}
 
