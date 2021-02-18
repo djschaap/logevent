@@ -62,7 +62,13 @@ func (sender *Sess) OpenSvc() error {
 // SendMessage sends a LogEvent to a RabbitMQ (AMQP) exchange.
 func (sender *Sess) SendMessage(logEvent logevent.LogEvent) error {
 	if sender.amqpChan == nil {
-		return errors.New("SendMessage() called before OpenSvc()")
+		err := sender.OpenSvc()
+		if err != nil {
+			return fmt.Errorf("Implicit reconnect from sendamqp.SendMessage() failed: %s", err)
+		}
+		log.Println("sendamqp.SendMessage() reconnected to MQ")
+		// beware: OpenSvc should still be called explicitly by parent the
+		//   first time to ensure `defer sender.CloseSvc()` occurs
 	}
 
 	select {
