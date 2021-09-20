@@ -37,12 +37,6 @@ func (realEnv) Unsetenv(k string) {
 	os.Unsetenv(k)
 }
 
-func initEnv() {
-	if env == nil {
-		env = realEnv{}
-	}
-}
-
 func GetMessageSenderFromEnv() (logevent.MessageSender, error) {
 	initEnv()
 	senderPackage := env.Getenv("SENDER_PACKAGE")
@@ -54,7 +48,7 @@ func GetMessageSenderFromEnv() (logevent.MessageSender, error) {
 
 	var sender logevent.MessageSender
 	if senderPackage == "sendamqp" {
-		amqpURL := env.Getenv("AMQP_URL")
+		amqpURL := buildAmqpUrl()
 		amqpExchange := env.Getenv("AMQP_EXCHANGE")
 		amqpRoutingKey := env.Getenv("AMQP_ROUTING_KEY")
 		amqpTtl := env.Getenv("AMQP_TTL")
@@ -97,6 +91,41 @@ func GetMessageSenderFromEnv() (logevent.MessageSender, error) {
 	return sender, nil
 }
 
+func buildAmqpUrl() string {
+	var amqpUrl string
+	amqpUrl = env.Getenv("AMQP_URL")
+	if len(amqpUrl) > 0 {
+		return amqpUrl
+	}
+
+	amqpHost := env.Getenv("AMQP_HOST")
+	amqpPassword := env.Getenv("AMQP_PASSWORD")
+	amqpPort := env.Getenv("AMQP_PORT")
+	amqpProtocol := env.Getenv("AMQP_PROTOCOL")
+	amqpUsername := env.Getenv("AMQP_USERNAME")
+	amqpVhost := env.Getenv("AMQP_VHOST")
+
+	var userPass string
+	if len(amqpPassword) > 0 {
+		userPass = fmt.Sprintf("%s:%s@", amqpUsername, amqpPassword)
+	} else {
+		userPass = fmt.Sprintf("%s@", amqpUsername)
+	}
+
+	var hostPort string
+	if len(amqpPort) > 0 {
+		hostPort = fmt.Sprintf("%s:%s", amqpHost, amqpPort)
+	} else {
+		hostPort = amqpHost
+	}
+	amqpUrl = fmt.Sprintf("%s://%s%s", amqpProtocol, userPass, hostPort)
+	if len(amqpVhost) > 0 {
+		amqpUrl = amqpUrl + "/" + amqpVhost
+	}
+
+	return amqpUrl
+}
+
 func getenvBool(k string) bool {
 	initEnv()
 	v := env.Getenv(k)
@@ -104,4 +133,10 @@ func getenvBool(k string) bool {
 		return true
 	}
 	return false
+}
+
+func initEnv() {
+	if env == nil {
+		env = realEnv{}
+	}
 }

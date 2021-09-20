@@ -14,6 +14,7 @@ go test -coverprofile=coverage.out ./... \
   && go tool cover -html=coverage.out
 
 # sendamqp integration tests
+#   (note: AMQP_URL must be used for integration tests; separate AMQP connection parameters will not work)
 docker run --rm -p 5672:5672 -p 15672:15672 rabbitmq:management-alpine
 AMQP_URL=amqp://guest:guest@localhost:5672 \
   go test -tags amqp ./...
@@ -34,14 +35,22 @@ represent true is NOT recommended.
 ### sendamqp Package
 
 Send message to RabbitMQ exchange.
-Exchange must already exist.
-`AMQP_ROUTING_KEY` may be meaningless when using a headers exchange,
-but some value must still be provided.
-`AMQP_TTL` is specified in seconds (default is no TTL).
+
+- Exchange must already exist.
+- `AMQP_HOST` defaults to `localhost`.
+- `AMQP_PASSWORD` MUST be set; it has no default.
+- `AMQP_PORT` defaults to 5672.
+- `AMQP_ROUTING_KEY` may be meaningless when using a headers exchange, but some value must still be provided.
+- `AMQP_TTL` is specified in seconds (default is no TTL).
+- `AMQP_USERNAME` defaults to `guest`.
+- `AMQP_VHOST` defaults to `` (root) virtual host.
+- `AMQP_URL` is DEPRECATED.
+  - It allows specification of `AMQP_HOST`, `AMQP_PASSWORD`, `AMQP_PORT`, `AMQP_USERNAME`, `AMQP_VHOST` via one variable.
+  - If specified, `AMQP_URL` will override the other connection parameters.
 
 ```bash
-export AMQP_URL=amqp://guest:guest@localhost:5672
 export AMQP_EXCHANGE=amq.headers
+export AMQP_PASSWORD=guest
 export AMQP_ROUTING_KEY=the_weather
 export AMQP_TTL=60
 SENDER_PACKAGE=sendamqp SENDER_TRACE=x go run cmd/send/main.go \

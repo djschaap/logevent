@@ -5,6 +5,58 @@ import (
 	"testing"
 )
 
+func TestBuildAmqpUrl(t *testing.T) {
+	t.Run("with AMQP_URL",
+		func(t *testing.T) {
+			env = NewFakeEnv()
+			env.Setenv("AMQP_URL", "amqp://me@override")
+			url := buildAmqpUrl()
+			if expected := "amqp://me@override"; url != expected {
+				t.Errorf("expected url=%s but got %s", expected, url)
+			}
+		},
+	)
+
+	t.Run("no vars (improper usage)",
+		func(t *testing.T) {
+			env = NewFakeEnv()
+			url := buildAmqpUrl()
+			if expected := "://@"; url != expected {
+				t.Errorf("expected url=%s but got %s", expected, url)
+			}
+		},
+	)
+
+	t.Run("only default vars",
+		func(t *testing.T) {
+			env = NewFakeEnv()
+			env.Setenv("AMQP_HOST", "l")
+			env.Setenv("AMQP_PROTOCOL", "amqp")
+			env.Setenv("AMQP_USERNAME", "u")
+			url := buildAmqpUrl()
+			if expected := "amqp://u@l"; url != expected {
+				t.Errorf("expected url=%s but got %s", expected, url)
+			}
+		},
+	)
+
+	t.Run("all vars",
+		func(t *testing.T) {
+			env = NewFakeEnv()
+			env.Setenv("AMQP_HOST", "mine")
+			env.Setenv("AMQP_PASSWORD", "nosecret")
+			env.Setenv("AMQP_PORT", "123")
+			env.Setenv("AMQP_PROTOCOL", "amqps")
+			env.Setenv("AMQP_USERNAME", "me")
+			env.Setenv("AMQP_VHOST", "vh")
+			url := buildAmqpUrl()
+			if expected := "amqps://me:nosecret@mine:123/vh"; url != expected {
+				t.Errorf("expected url=%s but got %s", expected, url)
+			}
+		},
+	)
+}
+
 func TestGetenvBool(t *testing.T) {
 	env = NewFakeEnv()
 
