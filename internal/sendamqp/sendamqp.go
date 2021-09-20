@@ -13,14 +13,15 @@ import (
 
 // Sess stores sendamqp session state.
 type Sess struct {
-	amqpChan       *amqp.Channel
-	amqpConn       *amqp.Connection
-	amqpError      chan *amqp.Error
-	amqpExchange   string
-	amqpRoutingKey string
-	amqpTtl        string
-	amqpURL        string
-	trace          bool
+	amqpChan          *amqp.Channel
+	amqpConn          *amqp.Connection
+	amqpError         chan *amqp.Error
+	amqpExchange      string
+	amqpRoutingKey    string
+	amqpTtl           string
+	amqpURL           string
+	openHasBeenCalled bool
+	trace             bool
 }
 
 // CloseSvc closes the open session.
@@ -32,6 +33,7 @@ func (sender *Sess) CloseSvc() error {
 	sender.amqpChan = nil
 	sender.amqpConn.Close()
 	sender.amqpConn = nil
+	sender.openHasBeenCalled = false
 	return nil
 }
 
@@ -53,6 +55,7 @@ func (sender *Sess) OpenSvc() error {
 		return fmt.Errorf("amqp.Connection.Channel() failed: %v", err)
 	}
 	sender.amqpChan = ch
+	sender.openHasBeenCalled = true
 
 	// TODO create exchange here, if desired
 
@@ -62,18 +65,18 @@ func (sender *Sess) OpenSvc() error {
 // SendMessage sends a LogEvent to a RabbitMQ (AMQP) exchange.
 func (sender *Sess) SendMessage(logEvent logevent.LogEvent) error {
 	if sender.amqpChan == nil {
-		err := sender.OpenSvc()
+		err := sender.reopenSvcAfterErr()
 		if err != nil {
 			return fmt.Errorf("Implicit reconnect from sendamqp.SendMessage() failed: %s", err)
 		}
 		log.Println("sendamqp.SendMessage() reconnected to MQ")
-		// beware: OpenSvc should still be called explicitly by parent the
+		// beware: OpenSvc MUST be called explicitly, from our caller/parent, the
 		//   first time to ensure `defer sender.CloseSvc()` occurs
 	}
 
 	select {
 	case err := <-sender.amqpError:
-		closeErr := sender.CloseSvc()
+		closeErr := sender.closeSvcAfterErr()
 		if closeErr != nil {
 			return fmt.Errorf("AMQP connection closed unexpectedly: %s; ALSO got error from CloseSvc: %s", err, closeErr)
 		} else {
@@ -142,6 +145,24 @@ func (sender *Sess) buildAmqpMessage(logEvent logevent.LogEvent) amqp.Publishing
 		amqpMessage.Type = attr.Type
 	}
 	return amqpMessage
+}
+
+func (sender *Sess) closeSvcAfterErr() error {
+	if sender.amqpConn == nil {
+		return errors.New("closeSvcAfterErr() called again or before OpenSvc(); that should not be done")
+	}
+	sender.amqpChan = nil
+	sender.amqpConn.Close()
+	sender.amqpConn = nil
+	// leave sender.openHasBeenCalled = true
+	return nil
+}
+
+func (sender *Sess) reopenSvcAfterErr() error {
+	if sender.openHasBeenCalled == false {
+		return errors.New("reopenSvcAfterErr() called before OpenSvc(); that should not be done")
+	}
+	return sender.OpenSvc()
 }
 
 func (sender *Sess) tracePretty(
